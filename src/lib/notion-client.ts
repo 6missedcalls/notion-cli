@@ -170,8 +170,8 @@ export class NotionClient {
       );
     }
 
-    // Batch large requests
-    const allResults: Block[] = [];
+    // Batch large requests (using immutable pattern)
+    let allResults: Block[] = [];
     for (let i = 0; i < children.length; i += BATCH_SIZE) {
       const batch = children.slice(i, i + BATCH_SIZE);
       const result = await this.request<PaginatedResponse<Block>>(
@@ -179,13 +179,13 @@ export class NotionClient {
         `/blocks/${blockId}/children`,
         { children: batch }
       );
-      
+
       if (!result.success) {
         return result;
       }
-      
+
       if (result.data?.results) {
-        allResults.push(...result.data.results);
+        allResults = [...allResults, ...result.data.results];
       }
     }
 

@@ -17,12 +17,18 @@ export function registerSearchCommand(program: Command): void {
       const globalOpts = program.opts();
       const ctx = createCliContext(globalOpts);
       const client = new NotionClient({ apiKey: ctx.apiKey });
-      
-      const filterType = opts.filter as 'page' | 'database' | undefined;
-      
-      if (filterType && filterType !== 'page' && filterType !== 'database') {
-        error(ctx, 'Filter must be "page" or "database"');
-        process.exit(1);
+
+      // Validate filter type
+      const validFilters = ['page', 'database'] as const;
+      type FilterType = (typeof validFilters)[number];
+
+      let filterType: FilterType | undefined;
+      if (opts.filter) {
+        if (!validFilters.includes(opts.filter as FilterType)) {
+          error(ctx, 'Filter must be "page" or "database"');
+          process.exit(1);
+        }
+        filterType = opts.filter as FilterType;
       }
       
       const result = await client.search(query, filterType, opts.cursor);

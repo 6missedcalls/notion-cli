@@ -7,7 +7,7 @@ import type { Command } from 'commander';
 import { readFile } from 'fs/promises';
 import { NotionClient } from '../lib/notion-client.js';
 import { markdownToBlocks } from '../lib/markdown.js';
-import { createCliContext, output, error, success, normalizeId, readStdin } from '../cli/shared.js';
+import { createCliContext, output, error, success, normalizeId, readStdin, validateFilePath } from '../cli/shared.js';
 import type { Block } from '../lib/types.js';
 
 export function registerPushCommand(program: Command): void {
@@ -32,7 +32,12 @@ export function registerPushCommand(program: Command): void {
       if (opts.stdin) {
         content = await readStdin();
       } else if (file) {
-        content = await readFile(file, 'utf-8');
+        try {
+          content = await readFile(validateFilePath(file), 'utf-8');
+        } catch (e) {
+          error(ctx, e instanceof Error ? e.message : 'Failed to read file');
+          process.exit(1);
+        }
       } else {
         error(ctx, 'Must specify a file or --stdin');
         process.exit(1);
@@ -52,8 +57,9 @@ export function registerPushCommand(program: Command): void {
         try {
           const parsed = JSON.parse(content);
           blocks = Array.isArray(parsed) ? parsed : parsed.children ?? [];
-        } catch {
-          error(ctx, 'Invalid JSON');
+        } catch (e) {
+          const message = e instanceof SyntaxError ? e.message : 'Unknown parse error';
+          error(ctx, `Invalid JSON: ${message}`);
           process.exit(1);
         }
       } else {

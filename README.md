@@ -2,6 +2,8 @@
 
 Fast Notion CLI for pages, databases, and blocks.
 
+Created for use by [Openclaw](https://github.com/openclaw-ai/openclaw).
+
 ## Install
 
 ```bash

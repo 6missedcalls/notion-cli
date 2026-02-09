@@ -54,12 +54,33 @@ export function info(ctx: CliContext, message: string): void {
 }
 
 export function normalizeId(id: string): string {
-  // Remove hyphens and extract ID from URL if needed
+  // Extract ID from URL if present
   const urlMatch = id.match(/([a-f0-9]{32})/i);
   if (urlMatch) {
     return urlMatch[1];
   }
-  return id.replace(/-/g, '');
+
+  // Remove hyphens and validate format
+  const cleaned = id.replace(/-/g, '');
+  if (!/^[a-f0-9]{32}$/i.test(cleaned)) {
+    throw new Error(`Invalid Notion ID format: ${id}`);
+  }
+  return cleaned;
+}
+
+export function validateUrl(url: string, allowedProtocols = ['http:', 'https:']): string {
+  try {
+    const parsed = new URL(url);
+    if (!allowedProtocols.includes(parsed.protocol)) {
+      throw new Error(`URL must use ${allowedProtocols.join(' or ')} protocol`);
+    }
+    return url;
+  } catch (e) {
+    if (e instanceof Error && e.message.includes('protocol')) {
+      throw e;
+    }
+    throw new Error(`Invalid URL format: ${url}`);
+  }
 }
 
 export function formatId(id: string): string {
@@ -67,6 +88,16 @@ export function formatId(id: string): string {
   const clean = id.replace(/-/g, '');
   if (clean.length !== 32) return id;
   return `${clean.slice(0, 8)}-${clean.slice(8, 12)}-${clean.slice(12, 16)}-${clean.slice(16, 20)}-${clean.slice(20)}`;
+}
+
+export function validateFilePath(filePath: string): string {
+  // Basic path validation - ensure no null bytes (path traversal via null byte injection)
+  if (filePath.includes('\0')) {
+    throw new Error('Invalid file path: contains null bytes');
+  }
+  // Check for common path traversal patterns that could be problematic
+  // Note: We allow relative paths as they're useful for CLI usage
+  return filePath;
 }
 
 export function readStdin(): Promise<string> {

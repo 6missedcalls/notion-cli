@@ -5,7 +5,7 @@
 import type { Command } from 'commander';
 import { readFile } from 'fs/promises';
 import { NotionClient } from '../lib/notion-client.js';
-import { createCliContext, output, error, success, normalizeId, readStdin } from '../cli/shared.js';
+import { createCliContext, output, error, success, normalizeId, readStdin, validateFilePath } from '../cli/shared.js';
 import type { Block } from '../lib/types.js';
 
 export function registerBlockCommands(program: Command): void {
@@ -66,7 +66,12 @@ export function registerBlockCommands(program: Command): void {
       if (opts.stdin) {
         blocksData = await readStdin();
       } else if (opts.json) {
-        blocksData = await readFile(opts.json, 'utf-8');
+        try {
+          blocksData = await readFile(validateFilePath(opts.json), 'utf-8');
+        } catch (e) {
+          error(ctx, e instanceof Error ? e.message : 'Failed to read file');
+          process.exit(1);
+        }
       } else {
         error(ctx, 'Must specify --json <file> or --stdin');
         process.exit(1);
@@ -75,8 +80,9 @@ export function registerBlockCommands(program: Command): void {
       let parsed: { children: Block[] } | Block[];
       try {
         parsed = JSON.parse(blocksData);
-      } catch {
-        error(ctx, 'Invalid JSON');
+      } catch (e) {
+        const message = e instanceof SyntaxError ? e.message : 'Unknown parse error';
+        error(ctx, `Invalid JSON: ${message}`);
         process.exit(1);
       }
       

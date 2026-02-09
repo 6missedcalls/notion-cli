@@ -72,6 +72,19 @@ export function markdownToBlocks(markdown: string): Block[] {
       continue;
     }
 
+    // Callout (using > [!NOTE] or > [!TIP] etc) - check before regular blockquote
+    const calloutMatch = trimmed.match(/^>\s*\[!(NOTE|TIP|WARNING|IMPORTANT|CAUTION)\]\s*(.*)$/i);
+    if (calloutMatch) {
+      const type = calloutMatch[1].toUpperCase();
+      const text = calloutMatch[2];
+      const emoji = type === 'WARNING' || type === 'CAUTION' ? '⚠️' :
+                   type === 'TIP' ? '💡' :
+                   type === 'IMPORTANT' ? '❗' : 'ℹ️';
+      blocks.push(callout(text || type, emoji));
+      i++;
+      continue;
+    }
+
     // Blockquote
     if (trimmed.startsWith('> ')) {
       blocks.push(quote(trimmed.slice(2)));
@@ -102,19 +115,6 @@ export function markdownToBlocks(markdown: string): Block[] {
     const numberedMatch = trimmed.match(/^(\d+)\.\s+(.*)$/);
     if (numberedMatch) {
       blocks.push(numberedListItem(numberedMatch[2]));
-      i++;
-      continue;
-    }
-
-    // Callout (using > [!NOTE] or > [!TIP] etc)
-    const calloutMatch = trimmed.match(/^>\s*\[!(NOTE|TIP|WARNING|IMPORTANT|CAUTION)\]\s*(.*)$/i);
-    if (calloutMatch) {
-      const type = calloutMatch[1].toUpperCase();
-      const text = calloutMatch[2];
-      const emoji = type === 'WARNING' || type === 'CAUTION' ? '⚠️' :
-                   type === 'TIP' ? '💡' :
-                   type === 'IMPORTANT' ? '❗' : 'ℹ️';
-      blocks.push(callout(text || type, emoji));
       i++;
       continue;
     }

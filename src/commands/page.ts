@@ -4,7 +4,7 @@
 
 import type { Command } from 'commander';
 import { NotionClient } from '../lib/notion-client.js';
-import { createCliContext, output, error, success, normalizeId } from '../cli/shared.js';
+import { createCliContext, output, error, success, normalizeId, validateUrl } from '../cli/shared.js';
 
 export function registerPageCommands(program: Command): void {
   const page = program.command('page').description('Page operations');
@@ -71,7 +71,15 @@ export function registerPageCommands(program: Command): void {
       
       const updates: Record<string, unknown> = {};
       if (opts.icon) updates.icon = { type: 'emoji', emoji: opts.icon };
-      if (opts.cover) updates.cover = { type: 'external', external: { url: opts.cover } };
+      if (opts.cover) {
+        try {
+          const validatedUrl = validateUrl(opts.cover);
+          updates.cover = { type: 'external', external: { url: validatedUrl } };
+        } catch (e) {
+          error(ctx, e instanceof Error ? e.message : 'Invalid cover URL');
+          process.exit(1);
+        }
+      }
       if (opts.archived) updates.archived = true;
       
       const result = await client.updatePage(normalizeId(id), updates);

@@ -1,6 +1,6 @@
 {
   "name": "@6missedcalls/notion-cli",
-  "version": "0.1.0",
+  "version": "0.1.4",
   "description": "Fast Notion CLI for pages, databases, and blocks",
   "type": "module",
   "main": "dist/index.js",
@@ -8,12 +8,37 @@
   "bin": {
     "notion": "dist/cli.js"
   },
-  "files": ["dist", "README.md", "LICENSE"],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "tsc",
     "dev": "tsx src/cli.ts",
     "notion": "pnpm run build && node dist/cli.js",
-    "test": "vitest run"
+    "test": "vitest run",
+    "prepublishOnly": "pnpm run build && pnpm test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/6missedcalls/notion-cli.git"
+  },
+  "keywords": [
+    "notion",
+    "cli",
+    "api",
+    "markdown",
+    "blocks"
+  ],
+  "author": "6missedcalls",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/6missedcalls/notion-cli/issues"
+  },
+  "homepage": "https://github.com/6missedcalls/notion-cli#readme",
+  "publishConfig": {
+    "access": "public"
   },
   "dependencies": {
     "commander": "^14.0.0",
@@ -21,6 +46,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
+    "@vitest/coverage-v8": "^4.0.18",
     "tsx": "^4.21.0",
     "typescript": "^5.9.0",
     "vitest": "^4.0.0"
